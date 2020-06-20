@@ -1,0 +1,10 @@
+redis:
+  redisMaster: redismaster
+  redisPassword: testredis@123
+  node:
+    - name: redis1
+      host: 10.22.7.111
+      port: 26379
+    - name: redis1
+      host: 10.22.7.112
+      port: 26379

@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.validation.Valid;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,13 +40,14 @@ import me.loda.spring.openapi3.repository.UserRepository;
 public class UserController {
     private final UserRepository userRepository;
 
-    @Operation(description = "Xem danh sách User", responses = {
-            @ApiResponse(content = @Content(array = @ArraySchema(schema = @Schema(implementation = User.class))), responseCode = "200") })
+    @Operation(description = "Xem danh sách User",
+            security = @SecurityRequirement(name = "BearerAuth"),
+            responses = {@ApiResponse(content = @Content(array = @ArraySchema(schema = @Schema(implementation = User.class))), responseCode = "200")})
     @ApiResponses(value = {
-            @ApiResponse(responseCode  = "200", description = "Thành công"),
-            @ApiResponse(responseCode  = "401", description = "Chưa xác thực"),
-            @ApiResponse(responseCode  = "403", description = "Truy cập bị cấm"),
-            @ApiResponse(responseCode  = "404", description = "Không tìm thấy")
+            @ApiResponse(responseCode = "200", description = "Thành công"),
+            @ApiResponse(responseCode = "401", description = "Chưa xác thực"),
+            @ApiResponse(responseCode = "403", description = "Truy cập bị cấm"),
+            @ApiResponse(responseCode = "404", description = "Không tìm thấy")
     })
     @GetMapping("/users")
     public List<User> getAllUsers() {

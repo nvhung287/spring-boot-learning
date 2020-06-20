@@ -8,16 +8,22 @@ package me.loda.springredis;
  *    Xin cảm ơn!
  *******************************************************/
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import io.lettuce.core.ReadFrom;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.data.redis.connection.RedisClusterConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.RedisNode;
+import org.springframework.data.redis.connection.RedisSentinelConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Copyright 2019 {@author Loda} (https://loda.me).
@@ -28,28 +34,68 @@ import org.springframework.data.redis.core.RedisTemplate;
  */
 @Configuration
 public class RedisConfig {
-    @Value("${redis.host}")
-    private String redisHost;
 
-    @Value("${redis.port}")
-    private int redisPort;
+    @Autowired
+    private YAMLConfig yamlConfig;
+
+//    @Bean
+//    public RedisConnectionFactory jedisConnectionFactory() {
+//        RedisSentinelConfiguration sentinelConfig = new RedisSentinelConfiguration()
+//                .master("mymaster")
+//                .sentinel("10.22.7.111", 26379)
+//                .sentinel("10.22.7.112", 26379);
+//        return new JedisConnectionFactory(sentinelConfig);
+//    }
+
+    private Set makeConfigRedis() {
+        Set<RedisNode> nodes = new HashSet<>();
+        for (RedisInfo redisInfo : yamlConfig.getNode()) {
+            nodes.add(new RedisNode(redisInfo.getHost(), redisInfo.getPort()));
+        }
+        return nodes;
+    }
 
 
     @Bean
-    public LettuceConnectionFactory redisConnectionFactory() {
-        // Tạo Standalone Connection tới Redis
-        return new LettuceConnectionFactory(new RedisStandaloneConfiguration(redisHost, redisPort));
+    public RedisConnectionFactory lettuceConnectionFactory() {
+
+        LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
+                .readFrom(ReadFrom.REPLICA)
+                .build();
+        RedisSentinelConfiguration serverSentinelConfig = new RedisSentinelConfiguration()
+                .master(yamlConfig.getRedisMaster());
+
+        serverSentinelConfig.setSentinels(makeConfigRedis());
+        LettuceConnectionFactory factory = new LettuceConnectionFactory(serverSentinelConfig, clientConfig);
+        factory.setDatabase(5);
+        factory.setPassword("testredis@123");
+        return factory;
     }
+//
+//    @Bean
+//    public LettuceConnectionFactory redisConnectionFactory() {
+//        // Tạo Standalone Connection tới Redis
+//        LettuceConnectionFactory factory = new LettuceConnectionFactory(new RedisStandaloneConfiguration(redisHost, redisPort));
+//        factory.setDatabase(5);
+//        factory.setPassword("testredis@123");
+//        return factory;
+//    }
 
     @Bean
     @Primary
-    public RedisTemplate<Object, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+    public RedisTemplate<?, ?> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         // tạo ra một RedisTemplate
         // Với Key là Object
         // Value là Object
         // RedisTemplate giúp chúng ta thao tác với Redis
-        RedisTemplate<Object, Object> template = new RedisTemplate<>();
+        RedisTemplate<?, ?> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setHashKeySerializer(new GenericJackson2JsonRedisSerializer());
+        template.afterPropertiesSet();
         return template;
     }
+
 }

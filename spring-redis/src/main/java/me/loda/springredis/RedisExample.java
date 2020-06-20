@@ -8,15 +8,13 @@ package me.loda.springredis;
  *    Xin cảm ơn!
  *******************************************************/
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Copyright 2019 {@author Loda} (https://loda.me).
@@ -32,15 +30,22 @@ public class RedisExample implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        listExample();
+        valueExample();
     }
+
+    @Autowired
+    private YAMLConfig myConfig;
 
     public void valueExample(){
         // Set giá trị của key "loda" là "hello redis"
-        template.opsForValue().set("loda","hello world");
+//        template.opsForValue().set("loda","hello world");
 
         // In ra màn hình Giá trị của key "loda" trong Redis
-        System.out.println("Value of key loda: "+template.opsForValue().get("loda"));
+//        System.out.println("Value of key loda: "+template.opsForValue().get("loda"));
+
+        Student student = Student.builder().name("hungnv").old(27).build();
+        template.opsForValue().set(student.getName(), student);
+        System.out.println(myConfig);
     }
 
     public void listExample(){

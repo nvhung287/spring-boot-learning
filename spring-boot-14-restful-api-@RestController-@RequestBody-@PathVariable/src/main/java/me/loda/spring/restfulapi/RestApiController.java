@@ -85,7 +85,8 @@ public class RestApiController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/todo")
+//    @PostMapping("/todo")
+    @PutMapping("/todo")
     public ResponseEntity addTodo(@RequestBody Todo todo) {
         todoList.add(todo);
         // Trả về response với STATUS CODE = 200 (OK)
